@@ -28,8 +28,7 @@
 #
 services:
   gateway:
-    build: .
-    image: hermes-agent
+    image: nousresearch/hermes-agent:latest
     container_name: hermes
     restart: unless-stopped
     network_mode: host
