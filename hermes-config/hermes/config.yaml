@@ -635,6 +635,6 @@ mcp_servers:
     notion:
         command: npx
         args:
-            - "@makenotion/notion-mcp-server"
+            - "@notionhq/notion-mcp-server"
         env:
             NOTION_API_KEY: "NOTION_API_KEY_REDACTED"
