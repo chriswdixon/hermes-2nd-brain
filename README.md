@@ -244,7 +244,38 @@ SLACK_SIGNING_SECRET=...
 TELEGRAM_BOT_TOKEN=...
 ```
 
-### Step 9: First Run & Customization
+### Step 9: Set Up MCP Servers (Optional but Recommended)
+
+The config includes **context-a8c** MCP (Automattic internal tools). On first run:
+
+```bash
+# When you first use Hermes, it will prompt you to authenticate
+# Click the auth prompt in the WebUI or terminal
+
+# Authenticate with your Automattic SSO credentials
+# This grants Hermes access to:
+# - Linear (tickets, projects, sprints)
+# - Slack (channels, DMs, context)
+# - P2 (internal blogs and posts)
+# - WordPress.com (site info, plugin data)
+```
+
+After auth, Hermes can query your team's Linear tickets, search Slack history, and access internal documentation.
+
+**To manage MCPs later:**
+```bash
+nano ~/.hermes/config.yaml
+
+# MCPs are under `lsp.servers`:
+lsp:
+  servers:
+    context-a8c:
+      command: npx
+      args:
+        - "@automattic/mcp-context-a8c"
+```
+
+### Step 10: First Run & Customization
 
 ```bash
 # Access Hermes WebUI at http://localhost:9119
@@ -255,6 +286,7 @@ TELEGRAM_BOT_TOKEN=...
 # 3. Reasoning effort → low/medium/high
 # 4. Enable/disable toolsets
 # 5. Set API keys for desired services
+# 6. Authenticate with MCP servers if needed
 ```
 
 ### Step 10: Create Your First Session
@@ -399,6 +431,29 @@ cp hermes-config/hermes/config.yaml ~/.hermes/config.yaml
 - **Toolsets**: CLI, web, various platform integrations
 - **Reasoning**: Medium effort, tool use auto-enforcement
 - **Plugins**: Enabled list is empty by default
+- **MCP Servers**: context-a8c (Automattic context — Linear, Slack, P2 access)
+
+### MCP Servers
+
+**context-a8c** — Access to Automattic internal tools:
+- **Linear** — Issues, projects, sprints, backlogs (read/write)
+- **Slack** — Channel messages, DMs, threads, lookups
+- **P2 blogs** — Internal P2 post search and content
+- **WordPress.com** — Site info, plugin data, infrastructure context
+
+Enabled by default in this config. Hermes will authenticate via OAuth 2.1 + PKCE on first use.
+
+**Setup:**
+```bash
+# MCP is pre-configured in config.yaml
+# On first run, you'll be prompted to authenticate with Automattic SSO
+
+# Hermes will then have access to:
+# - Linear tickets and project context
+# - Slack channels and messages
+# - P2 internal blogs
+# - WordPress.com site information
+```
 
 ### Model Configuration
 

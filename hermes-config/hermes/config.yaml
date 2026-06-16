@@ -369,7 +369,11 @@ logging:
 lsp:
   enabled: true
   install_strategy: auto
-  servers: {}
+  servers:
+    context-a8c:
+      command: npx
+      args:
+        - "@automattic/mcp-context-a8c"
   wait_mode: document
   wait_timeout: 5
 matrix:
