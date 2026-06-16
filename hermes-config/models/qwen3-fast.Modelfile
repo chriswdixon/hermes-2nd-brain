@@ -1,0 +1,19 @@
+# qwen3-fast — custom Ollama model used by Hermes (provider: ollama-launch)
+#
+# NOTE: the original `FROM` referenced a machine-local blob path
+# (~/.ollama/models/blobs/sha256-...). Replace the FROM below with the
+# base model you built this from before running `ollama create`.
+#
+#   ollama create qwen3-fast -f qwen3-fast.Modelfile
+#
+FROM <base-model>:<tag>
+TEMPLATE {{ .Prompt }}
+RENDERER qwen3.5
+PARSER qwen3.5
+PARAMETER min_p 0
+PARAMETER num_ctx 32768
+PARAMETER presence_penalty 1.5
+PARAMETER repeat_penalty 1
+PARAMETER temperature 1
+PARAMETER top_k 20
+PARAMETER top_p 0.95

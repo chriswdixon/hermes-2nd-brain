@@ -1,0 +1,50 @@
+# Security: Never commit actual secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*-credentials.json
+*-sa.json
+secrets/
+.secrets
+private/
+
+# Local development
+node_modules/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# API Keys and tokens (even if named differently)
+*api*key*
+*access*token*
+*secret*
+*password*
+*auth*
+*.token
+
+# Environment-specific files that might contain secrets
+hermes.env
+.hermes.env
+docker.env
+.docker.env
+
+# Ollama local models (too large)
+models/blobs/
+models/*.bin
+models/*.gguf
+
+# Runtime/cache files
+__pycache__/
+*.pyc
+.cache/
+.venv/
+.idea/
+.vscode/
+
+# Credentials in environment files
+webui-docker/.env
+webui-docker/hermes.env
+webui-docker/webui.ctl.env
