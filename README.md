@@ -1,6 +1,37 @@
 # Hermes 2nd Brain Backup
 
-Personal backup of Hermes Agent configuration, personalities, skills, plugins, and Docker setup.
+Complete local Hermes Agent v0.16.0 setup with Ollama, WebUI, Gateway, and team context access.
+
+**Status:** Production-ready, auto-starting on reboot.
+
+## Quick Summary
+
+This is a complete Hermes setup running on macOS with:
+
+- **Hermes Agent v0.16.0** — Local AI agent with Ollama (qwen3-fast, 65K context)
+- **Hermes WebUI** — Web interface at http://localhost:8787
+- **Hermes Gateway** — Enables WebUI + scheduled jobs (cron)
+- **MCP (context-a8c)** — Access to Linear, Slack, P2, WordPress.com
+- **Auto-start** — All services start on reboot via launchd
+- **App Icon** — Hermes WebUI clickable app in Applications/Dock
+
+### Running Services
+
+```bash
+# Check service status
+launchctl list | grep hermes
+
+# View logs
+tail -f ~/.hermes/logs/gateway.log      # Gateway
+tail -f ~/.hermes/webui/bootstrap-8787.log  # WebUI
+cat /tmp/hermes-stdout.log              # Agent
+```
+
+### Access
+
+- **CLI:** `hermes` or `ollama launch hermes --model qwen3-fast`
+- **WebUI:** http://localhost:8787 (click app in Dock or Applications)
+- **Gateway:** Running on http://127.0.0.1:8000 (internal)
 
 ## Contents
 
@@ -459,26 +490,38 @@ Enabled by default in this config. Hermes will authenticate via OAuth 2.1 + PKCE
 
 The `qwen3-fast.Modelfile` defines a custom Ollama model with:
 - `min_p: 0`
-- `num_ctx: 32768` (32K context window)
+- `num_ctx: 65536` (65K context window — required for reliable tool use)
 - `temperature: 1`
 - `top_k: 20`, `top_p: 0.95`
 - Custom parser/renderer for Qwen3.5
+
+**Context Window**: 65,536 tokens (upgraded from 32K for tool reliability)
 
 To rebuild:
 ```bash
 ollama create qwen3-fast -f hermes-config/models/qwen3-fast.Modelfile
 ```
 
-### Docker Setup
+### Services & Daemons
 
-**Services:**
-- `gateway` - Main Hermes agent service (host network, port bindings handled locally)
-- `dashboard` - Dashboard UI (localhost:9119)
+**Running Services (macOS launchd):**
+- `com.hermes.agent` - Hermes CLI agent (via `ollama launch hermes`)
+- `ai.hermes.gateway` - Hermes Gateway daemon (enables WebUI + scheduled jobs)
+- `com.hermes.webui` - Hermes WebUI server (runs `ctl.sh start`)
 
-**Security Notes:**
-- Dashboard binds to `127.0.0.1` only (local access only)
-- API server is disabled by default (requires `API_SERVER_KEY` and `API_SERVER_HOST` env vars)
-- All config files and API keys stored in `~/.hermes` volume mount
+**Access:**
+- **CLI**: `hermes` or `ollama launch hermes --model qwen3-fast`
+- **WebUI**: http://localhost:8787 (or click app in Dock)
+- **Gateway API**: http://127.0.0.1:8000 (internal, used by WebUI)
+
+**Logs:**
+```bash
+tail -f ~/.hermes/logs/gateway.log          # Gateway
+tail -f ~/.hermes/webui/bootstrap-8787.log  # WebUI
+```
+
+**Docker Setup** (alternative to launchd):
+The `docker-compose.yml` in this repo is for reference. On macOS, native launchd services are preferred for auto-start and reliability.
 
 ## Customization Guide
 
