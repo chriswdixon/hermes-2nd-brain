@@ -4,6 +4,7 @@ model:
   api_key: ollama
   default: qwen3.6
   context_length: 65536
+  max_tokens: 8192
 providers: {}
 fallback_providers: []
 credential_pool_strategies: {}
@@ -29,14 +30,14 @@ agent:
   disabled_toolsets: []
   default_model: qwen3.6
   personalities:
-    tars: "You are TARS, a brilliant and eccentric AI assistant. You are direct, methodical,\
-      \ and utterly pragmatic. You communicate with precision and clarity, valuing\
-      \ efficiency over politeness. You have a dry sense of humor and aren't afraid\
-      \ to be blunt when it serves the truth. You think in systems and patterns. You\
-      \ see the world in terms of probabilities and optimization. You value competence\
-      \ above all else. When you don't know something, you say so. When something\
-      \ is a bad idea, you tell people it's a bad idea. You're not here to make anyone\
-      \ feel better\u2014you're here to solve problems and find truth."
+    tars: You are TARS, a brilliant and eccentric AI assistant. You are direct, methodical,
+      and utterly pragmatic. You communicate with precision and clarity, valuing efficiency
+      over politeness. You have a dry sense of humor and aren't afraid to be blunt
+      when it serves the truth. You think in systems and patterns. You see the world
+      in terms of probabilities and optimization. You value competence above all else.
+      When you don't know something, you say so. When something is a bad idea, you
+      tell people it's a bad idea. You're not here to make anyone feel better—you're
+      here to solve problems and find truth.
     helpful: You are a helpful, friendly AI assistant.
   personality: tars
 terminal:
@@ -385,6 +386,7 @@ skills:
   inline_shell_timeout: 10
   guard_agent_created: false
   write_approval: false
+  disabled: []
 curator:
   enabled: true
   interval_hours: 168
@@ -489,12 +491,7 @@ code_execution:
   mode: project
 tools:
   tool_search:
-    # "off" — expose ALL tools (incl. MCP) directly in the tools array.
-    # Was "auto", which defers MCP tools behind a tool_search meta-tool once
-    # they exceed 10% of context. qwen3.6 doesn't reliably use that indirection,
-    # so notion/context-a8c tools were invisible to the model. qwen3.6 has a
-    # 262k context, so directly exposing ~15k tokens of tool schemas is fine.
-    enabled: "off"
+    enabled: 'off'
     threshold_pct: 10
     search_default_limit: 5
     max_search_limit: 20
@@ -521,7 +518,7 @@ streaming:
   transport: auto
   edit_interval: 0.8
   buffer_threshold: 24
-  cursor: " \u2589"
+  cursor: ' ▉'
   fresh_final_after_seconds: 0.0
 sessions:
   auto_prune: false
@@ -569,25 +566,8 @@ mcp_servers:
     url: https://mcp.notion.com/mcp
     auth: oauth
     enabled: true
-
-# ── Fallback Model ────────────────────────────────────────────────────
-# Automatic provider failover when primary is unavailable.
-# Uncomment and configure to enable. Triggers on rate limits (429),
-# overload (529), service errors (503), or connection failures.
-#
-# Supported providers:
-#   openrouter   (OPENROUTER_API_KEY)  — routes to any model
-#   openai-codex (OAuth — hermes auth) — OpenAI Codex
-#   nous         (OAuth — hermes auth) — Nous Portal
-#   zai          (ZAI_API_KEY)         — Z.AI / GLM
-#   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
-#   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
-#   minimax      (MINIMAX_API_KEY)     — MiniMax
-#   minimax-cn   (MINIMAX_CN_API_KEY)  — MiniMax (China)
-#   bedrock      (AWS IAM / boto3)     — AWS Bedrock (Converse API)
-#
-# For custom OpenAI-compatible endpoints, add base_url and key_env.
-#
-# fallback_model:
-#   provider: openrouter
-#   model: anthropic/claude-sonnet-4
+  quill:
+    command: node
+    args:
+    - /Users/mrchriswdixon/Library/Application Support/Quill/mcp-stdio-bridge.js
+    enabled: true
