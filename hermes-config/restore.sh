@@ -36,6 +36,26 @@ cd "$HERMES_HOME/hermes-agent"
 # MCP client SDK — required for any MCP server (context-a8c, notion, etc.)
 ./venv/bin/pip install -q mcp
 
+echo "==> Restoring config, SOUL.md (TARS identity), and personas (before postinstall so setup is skipped)"
+# SOUL.md is the PRIMARY identity. Without it you get stock 'Hermes', not TARS.
+# This is NOT optional. Copy it every time. Restored here (before postinstall)
+# so 'hermes postinstall' sees a valid config and does not drop into the
+# interactive setup wizard.
+cp "$CONFIG_SRC/config.yaml" "$HERMES_HOME/config.yaml"
+cp "$CONFIG_SRC/SOUL.md"     "$HERMES_HOME/SOUL.md"
+cp "$CONFIG_SRC/MEMORY.md"   "$HERMES_HOME/MEMORY.md" 2>/dev/null || true
+mkdir -p "$HERMES_HOME/personas"
+cp "$CONFIG_SRC/personas/"*.md "$HERMES_HOME/personas/"
+
+echo "==> Bootstrapping non-Python deps (node/npx, browser, ripgrep, ffmpeg)"
+# Creates ~/.hermes/node — provides npx, which context-a8c (stdio MCP) needs.
+# Without this, npx-based MCP servers silently fail to spawn.
+./venv/bin/hermes postinstall || echo "  (postinstall reported issues — check node: ls ~/.hermes/node/bin)"
+
+echo "==> Linking 'hermes' onto PATH (~/.local/bin)"
+mkdir -p "${HOME}/.local/bin"
+ln -sf "$HERMES_HOME/hermes-agent/venv/bin/hermes" "${HOME}/.local/bin/hermes"
+
 echo "==> Cloning Hermes WebUI"
 if [ ! -d "$HERMES_HOME/webui/.git" ]; then
   git clone https://github.com/nesquena/hermes-webui.git "$HERMES_HOME/webui"
@@ -48,15 +68,6 @@ cd "$HERMES_HOME/webui"
 ./venv/bin/pip install -q -e "$HERMES_HOME/hermes-agent"
 # MCP client SDK in the webui venv as well (it spawns MCP servers via the agent).
 ./venv/bin/pip install -q mcp
-
-echo "==> Restoring config, SOUL.md (TARS identity), and personas"
-# SOUL.md is the PRIMARY identity. Without it you get stock 'Hermes', not TARS.
-# This is NOT optional. Copy it every time.
-cp "$CONFIG_SRC/config.yaml" "$HERMES_HOME/config.yaml"
-cp "$CONFIG_SRC/SOUL.md"     "$HERMES_HOME/SOUL.md"
-cp "$CONFIG_SRC/MEMORY.md"   "$HERMES_HOME/MEMORY.md" 2>/dev/null || true
-mkdir -p "$HERMES_HOME/personas"
-cp "$CONFIG_SRC/personas/"*.md "$HERMES_HOME/personas/"
 
 echo "==> Installing launchd services (gateway + webui auto-start)"
 cp "${REPO_DIR}/hermes-config/launchd/com.hermes.gateway.plist" "${HOME}/Library/LaunchAgents/"
@@ -79,9 +90,12 @@ echo ""
 echo "Done. Open http://localhost:8787 — you should be greeted by TARS, not Hermes."
 echo "If it says 'Hermes', SOUL.md didn't land. Re-run: cp $CONFIG_SRC/SOUL.md $HERMES_HOME/SOUL.md && hermes gateway restart"
 echo ""
-echo "MCP servers (context-a8c, notion) are configured in config.yaml but OAuth"
-echo "tokens are per-machine and NOT in this backup. Authenticate interactively:"
+echo "MCP servers (context-a8c, notion) are already enabled in config.yaml with"
+echo "tool_search OFF (so the model sees their tools directly). But OAuth tokens"
+echo "are per-machine and NOT in this backup. One manual step for Notion:"
 echo "    export PATH=\"\$HOME/.hermes/node/bin:\$HOME/.local/bin:\$PATH\""
-echo "    hermes mcp login notion     # opens browser"
-echo "    hermes mcp test context-a8c # verify (self-auths)"
-echo "Then enable any that are disabled:  hermes mcp configure <name>"
+echo "    hermes mcp login notion     # opens browser (one-time)"
+echo "    hermes mcp test notion      # expect: Connected, 16 tools"
+echo "    hermes mcp test context-a8c # expect: Connected, self-auths"
+echo "    hermes gateway restart      # pick up the new token"
+echo "Then in the WebUI start a NEW chat (old sessions have a frozen toolset)."

@@ -103,28 +103,40 @@ ollama pull qwen3.6:latest
 git clone https://github.com/NousResearch/hermes-agent.git ~/.hermes/hermes-agent
 cd ~/.hermes/hermes-agent
 python3.13 -m venv venv && ./venv/bin/pip install -e .
+./venv/bin/pip install mcp          # MCP client SDK (both venvs need it)
 
-# 2. WebUI (and install the agent editable INTO the webui venv — it imports it)
-git clone https://github.com/nesquena/hermes-webui.git ~/.hermes/webui
-cd ~/.hermes/webui
-python3.13 -m venv venv
-./venv/bin/pip install -r requirements.txt
-./venv/bin/pip install -e ~/.hermes/hermes-agent
-
-# 3. Config + identity (SOUL.md is mandatory — see warning above)
+# 2. Config + identity (SOUL.md is mandatory — see warning above)
+#    Do this BEFORE postinstall so the setup wizard is skipped.
 cp hermes-config/hermes/config.yaml ~/.hermes/config.yaml
 cp hermes-config/hermes/SOUL.md     ~/.hermes/SOUL.md
 mkdir -p ~/.hermes/personas
 cp hermes-config/hermes/personas/*.md ~/.hermes/personas/
 
-# 4. Auto-start
+# 3. Non-Python deps + PATH link
+#    postinstall creates ~/.hermes/node (provides npx for context-a8c) plus
+#    browser/ripgrep/ffmpeg. Without it, npx-based MCP servers can't spawn.
+./venv/bin/hermes postinstall
+mkdir -p ~/.local/bin
+ln -sf ~/.hermes/hermes-agent/venv/bin/hermes ~/.local/bin/hermes
+
+# 4. WebUI (install the agent editable INTO the webui venv — it imports it)
+git clone https://github.com/nesquena/hermes-webui.git ~/.hermes/webui
+cd ~/.hermes/webui
+python3.13 -m venv venv
+./venv/bin/pip install -r requirements.txt
+./venv/bin/pip install -e ~/.hermes/hermes-agent
+./venv/bin/pip install mcp
+
+# 6. Auto-start
 cp hermes-config/launchd/*.plist ~/Library/LaunchAgents/
 for s in com.hermes.gateway com.hermes.webui; do
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/$s.plist
 done
 
-# 5. Verify
+# 7. Verify + one-time Notion OAuth (token is per-machine, not in backup)
 sleep 5 && curl -s http://localhost:8787/health
+export PATH="$HOME/.hermes/node/bin:$HOME/.local/bin:$PATH"
+hermes mcp login notion && hermes gateway restart
 ```
 
 ## config.yaml — the parts that matter
