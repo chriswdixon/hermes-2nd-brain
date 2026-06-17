@@ -562,6 +562,7 @@ mcp_servers:
     enabled: true
   notion:
     url: https://mcp.notion.com/mcp
+    auth: oauth
     enabled: false
 
 # ── Fallback Model ────────────────────────────────────────────────────
