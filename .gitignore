@@ -1,50 +1,25 @@
-# Security: Never commit actual secrets
-.env
-.env.local
-.env.*.local
-*.key
-*.pem
-*-credentials.json
-*-sa.json
-secrets/
-.secrets
-private/
+# The repo root IS the live ~/.hermes runtime dir, so ignore everything by
+# default and explicitly allow only the backup artifacts we want versioned.
+# This keeps the agent install, webui, node, logs, databases, sessions,
+# secrets, and model blobs out of git automatically.
 
-# Local development
-node_modules/
-.DS_Store
-*.swp
-*.swo
-*~
+# Ignore all
+*
 
-# API Keys and tokens (even if named differently)
-*api*key*
-*access*token*
-*secret*
-*password*
-*auth*
-*.token
+# Allow the backup tree and docs
+!.gitignore
+!README.md
+!hermes-config/
+!hermes-config/**
 
-# Environment-specific files that might contain secrets
-hermes.env
-.hermes.env
-docker.env
-.docker.env
-
-# Ollama local models (too large)
-models/blobs/
-models/*.bin
-models/*.gguf
-
-# Runtime/cache files
-__pycache__/
-*.pyc
-.cache/
-.venv/
-.idea/
-.vscode/
-
-# Credentials in environment files
-webui-docker/.env
-webui-docker/hermes.env
-webui-docker/webui.ctl.env
+# Within the backup tree, still block anything secret-shaped
+hermes-config/**/.env
+hermes-config/**/*.key
+hermes-config/**/*.pem
+hermes-config/**/*-credentials.json
+hermes-config/**/*-sa.json
+hermes-config/**/hermes.env
+hermes-config/**/webui.ctl.env
+hermes-config/models/blobs/
+hermes-config/models/*.gguf
+hermes-config/models/*.bin
