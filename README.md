@@ -160,6 +160,12 @@ Two non-obvious requirements, both now handled by `restore.sh`:
 1. **`mcp` Python SDK** must be installed in **both** venvs (agent + webui), or you get `requires the 'mcp' Python SDK`. `pip install mcp`.
 2. **The gateway needs `npx` on its PATH.** launchd runs with a minimal PATH, so the gateway plist sets `PATH` to include `~/.hermes/node/bin`. Without it, npx-based servers (context-a8c) silently fail to spawn.
 
+### ⚠️ tool_search deferral hides MCP tools from the model
+
+`config.yaml` sets `tools.tool_search.enabled: "off"`. **Do not set it back to `auto`.** In `auto` mode, once tool schemas exceed ~10% of context, Hermes *defers* the MCP tools behind a `tool_search` meta-tool — the model has to "search" for them instead of seeing them directly. qwen3.6 doesn't reliably use that indirection, so it reports "I don't have a notion tool" even though the tools loaded fine. `"off"` exposes all ~48 tools directly. qwen3.6's 262K context easily absorbs the extra ~15K tokens of schemas.
+
+Symptom if this regresses: `hermes mcp test notion` works, the tools show enabled, but the chat model insists it can't see them.
+
 **OAuth tokens are per-machine and are NOT in this backup.** After a restore, authenticate interactively (needs a terminal + browser):
 
 ```bash
@@ -194,6 +200,8 @@ hermes gateway restart
 | MCP `requires the 'mcp' Python SDK` | SDK missing from venv | `~/.hermes/{hermes-agent,webui}/venv/bin/pip install mcp` |
 | npx-based MCP server won't spawn under gateway | launchd minimal PATH lacks npx | gateway plist sets `PATH` incl. `~/.hermes/node/bin`; restart gateway |
 | MCP OAuth "non-interactive environment" | No cached token | Run `hermes mcp login <name>` in a real terminal |
+| Model says "I don't have a notion tool" but `mcp test` works | `tool_search` deferring MCP tools | Set `tools.tool_search.enabled: "off"`, restart gateway + webui |
+| context-a8c won't spawn in webui chat | webui plist PATH lacks npx | webui plist `PATH` includes `~/.hermes/node/bin`; restart webui |
 | WebUI 500 / blank | `ctl.sh` can't find python | launchd plist runs `webui/venv/bin/python server.py` directly (see `hermes-config/launchd/`) |
 | `exit status 126` on `ollama launch` | Gateway service issue | Check `/tmp/hermes-gateway.err`, then `hermes gateway restart` |
 

@@ -489,7 +489,12 @@ code_execution:
   mode: project
 tools:
   tool_search:
-    enabled: auto
+    # "off" — expose ALL tools (incl. MCP) directly in the tools array.
+    # Was "auto", which defers MCP tools behind a tool_search meta-tool once
+    # they exceed 10% of context. qwen3.6 doesn't reliably use that indirection,
+    # so notion/context-a8c tools were invisible to the model. qwen3.6 has a
+    # 262k context, so directly exposing ~15k tokens of tool schemas is fine.
+    enabled: "off"
     threshold_pct: 10
     search_default_limit: 5
     max_search_limit: 20
