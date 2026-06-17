@@ -167,6 +167,8 @@ Two are configured in `config.yaml`:
 | `context-a8c` | `npx @automattic/mcp-context-a8c` | self-managed | Linear, Slack, P2, WordPress.com (via load-provider / execute-tool) |
 | `notion` | `https://mcp.notion.com/mcp` | OAuth (browser) | Notion search / pages / databases |
 
+> **⚠️ Notion integration: use `ntn` CLI, NOT the MCP server.** The Notion MCP (both the `mcp.notion.com/mcp` remote and the `@notionhq/notion-mcp-server` local npx variant) exposes ~50 tools and floods the context window regardless of `tool_search` settings. qwen3.6 handles this poorly and becomes unreliable. The working approach is the `ntn` Notion CLI as a Hermes skill — set `NOTION_API_KEY` in the environment and let the model call it as a shell command. The Notion MCP config blocks in `config.yaml` are kept for reference but should remain disabled.
+
 Two non-obvious requirements, both now handled by `restore.sh`:
 
 1. **`mcp` Python SDK** must be installed in **both** venvs (agent + webui), or you get `requires the 'mcp' Python SDK`. `pip install mcp`.
