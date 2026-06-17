@@ -33,6 +33,8 @@ echo "==> Building Hermes Agent venv (Python 3.13)"
 cd "$HERMES_HOME/hermes-agent"
 "$PY" -m venv venv
 ./venv/bin/pip install -q -e .
+# MCP client SDK — required for any MCP server (context-a8c, notion, etc.)
+./venv/bin/pip install -q mcp
 
 echo "==> Cloning Hermes WebUI"
 if [ ! -d "$HERMES_HOME/webui/.git" ]; then
@@ -44,6 +46,8 @@ cd "$HERMES_HOME/webui"
 ./venv/bin/pip install -q -r requirements.txt
 # WebUI must import the agent — install it editable INTO the webui venv too.
 ./venv/bin/pip install -q -e "$HERMES_HOME/hermes-agent"
+# MCP client SDK in the webui venv as well (it spawns MCP servers via the agent).
+./venv/bin/pip install -q mcp
 
 echo "==> Restoring config, SOUL.md (TARS identity), and personas"
 # SOUL.md is the PRIMARY identity. Without it you get stock 'Hermes', not TARS.
@@ -74,3 +78,10 @@ fi
 echo ""
 echo "Done. Open http://localhost:8787 — you should be greeted by TARS, not Hermes."
 echo "If it says 'Hermes', SOUL.md didn't land. Re-run: cp $CONFIG_SRC/SOUL.md $HERMES_HOME/SOUL.md && hermes gateway restart"
+echo ""
+echo "MCP servers (context-a8c, notion) are configured in config.yaml but OAuth"
+echo "tokens are per-machine and NOT in this backup. Authenticate interactively:"
+echo "    export PATH=\"\$HOME/.hermes/node/bin:\$HOME/.local/bin:\$PATH\""
+echo "    hermes mcp login notion     # opens browser"
+echo "    hermes mcp test context-a8c # verify (self-auths)"
+echo "Then enable any that are disabled:  hermes mcp configure <name>"
