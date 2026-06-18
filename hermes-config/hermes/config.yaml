@@ -3,9 +3,8 @@ model:
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
   default: qwen3.6
-  context_length: 65536
-  max_tokens: 8192
-max_tokens: 8192
+  context_length: 196608
+  max_tokens: 32768
 providers: {}
 fallback_providers: []
 credential_pool_strategies: {}
@@ -28,7 +27,12 @@ agent:
   gateway_notify_interval: 180
   gateway_auto_continue_freshness: 3600
   image_input_mode: auto
-  disabled_toolsets: []
+  disabled_toolsets:
+  - homeassistant
+  - tts
+  - image_gen
+  - kanban
+  - computer_use
   default_model: qwen3.6
   personalities:
     tars: You are TARS, a brilliant and eccentric AI assistant. You are direct, methodical,
@@ -95,7 +99,7 @@ checkpoints:
   retention_days: 7
   delete_orphans: true
   min_interval_hours: 24
-context_file_max_chars: 20000
+context_file_max_chars: 80000
 file_read_max_chars: 100000
 tool_output:
   max_bytes: 50000
@@ -359,8 +363,8 @@ memory:
   memory_enabled: true
   user_profile_enabled: true
   write_approval: false
-  memory_char_limit: 2200
-  user_char_limit: 1375
+  memory_char_limit: 8000
+  user_char_limit: 4000
   provider: ''
 delegation:
   model: ''
@@ -455,7 +459,10 @@ approvals:
   cron_mode: deny
   mcp_reload_confirm: true
   destructive_slash_confirm: true
-command_allowlist: []
+command_allowlist:
+- tirith:schemeless_to_sink
+- script execution via -e/-c flag
+- execute_code
 quick_commands: {}
 hooks: {}
 hooks_auto_accept: false
@@ -492,8 +499,8 @@ code_execution:
   mode: project
 tools:
   tool_search:
-    enabled: 'off'
-    threshold_pct: 10
+    enabled: auto
+    threshold_pct: 30
     search_default_limit: 5
     max_search_limit: 20
 logging:
@@ -557,18 +564,14 @@ paste_collapse_threshold: 5
 paste_collapse_threshold_fallback: 5
 paste_collapse_char_threshold: 2000
 _config_version: 29
+max_tokens: 32768
 mcp_servers:
   context-a8c:
-    command: npx
-    args:
-    - '@automattic/mcp-context-a8c'
+    command: /Users/mrchriswdixon/.hermes/scripts/context-a8c.sh
     enabled: true
   notion:
     url: https://mcp.notion.com/mcp
     auth: oauth
-    enabled: true
-  quill:
-    command: node
-    args:
-    - /Users/mrchriswdixon/Library/Application Support/Quill/mcp-stdio-bridge.js
-    enabled: true
+    enabled: false
+experimental:
+  unified_session_db: false
