@@ -1,6 +1,6 @@
 # Hermes 2nd Brain Backup
 
-Complete local Hermes Agent v0.16.0 setup: Ollama (qwen3.6), native WebUI, Gateway, and TARS personality. Auto-starts on reboot via launchd.
+Complete local Hermes Agent v0.16.0 setup: Ollama (qwen3-fast), native WebUI, Gateway, and TARS personality. Auto-starts on reboot via launchd.
 
 **Status:** Production-ready, auto-starting on reboot.
 
@@ -20,7 +20,7 @@ This is a **native macOS setup** — not Docker. Three moving parts:
 
 - **Hermes Agent v0.16.0** — `~/.hermes/hermes-agent`, Python **3.13** venv
 - **Hermes WebUI** ([nesquena/hermes-webui](https://github.com/nesquena/hermes-webui)) — `~/.hermes/webui`, Python **3.13** venv, serves http://localhost:8787
-- **Ollama** — running `qwen3.6:latest` on http://127.0.0.1:11434
+- **Ollama** — running `qwen3-fast:latest` on http://127.0.0.1:11434
 
 Identity is **TARS**, defined in `SOUL.md` (see the warning below — this is the part that breaks).
 
@@ -28,7 +28,7 @@ Identity is **TARS**, defined in `SOUL.md` (see the warning below — this is th
 
 | Thing | Correct value | Common wrong value |
 |-------|---------------|--------------------|
-| Model | `qwen3.6` | ~~qwen3-fast~~ |
+| Model | `qwen3-fast` | ~~qwen3.6~~ (23GB; overkill for this setup) |
 | Provider | `ollama` | ~~ollama-launch~~ (needs an API key that doesn't exist) |
 | WebUI port | `8787` | ~~9119~~ (that's the agent's own `hermes dashboard`, different thing) |
 | Python | `3.13` | ~~3.14~~ (agent requires `<3.14`) |
@@ -77,7 +77,7 @@ done
 hermes-config/
 ├── restore.sh                 # Full rebuild script (start here)
 ├── hermes/
-│   ├── config.yaml            # Agent config: qwen3.6 via ollama, TARS default
+│   ├── config.yaml            # Agent config: qwen3-fast via ollama, TARS default
 │   ├── SOUL.md                # TARS identity — THE primary persona source
 │   ├── MEMORY.md              # Persistent memory snapshot
 │   └── personas/              # Persona reference docs
@@ -88,7 +88,7 @@ hermes-config/
 │   ├── com.hermes.gateway.plist
 │   └── com.hermes.webui.plist
 ├── models/
-│   └── qwen3-fast.Modelfile   # Legacy custom model (unused; kept for reference)
+│   └── qwen3-fast.Modelfile   # Active model definition — run `ollama create qwen3-fast -f` to rebuild
 └── webui-docker/              # Legacy Docker setup (unused; kept for reference)
 ```
 
@@ -97,7 +97,7 @@ hermes-config/
 ```bash
 # 0. Prereqs
 brew install python@3.13 ollama
-ollama pull qwen3.6:latest
+ollama pull qwen3-fast:latest
 
 # 1. Agent
 git clone https://github.com/NousResearch/hermes-agent.git ~/.hermes/hermes-agent
@@ -143,7 +143,7 @@ hermes mcp login notion && hermes gateway restart
 
 ```yaml
 agent:
-  default_model: qwen3.6
+  default_model: qwen3-fast
   personality: tars          # selects from personalities{} for the picker;
                              # the ACTUAL default identity is SOUL.md
   personalities:
@@ -154,8 +154,9 @@ model:
   provider: ollama           # NOT ollama-launch
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
-  default: qwen3.6
-  context_length: 65536
+  default: qwen3-fast
+  context_length: 65536      # override: real window is 40960 but Hermes requires ≥64K to boot
+  max_tokens: 8192           # must be well below context_length; 32768 caused truncation loops
 ```
 
 ## MCP Servers
@@ -167,7 +168,7 @@ Two are configured in `config.yaml`:
 | `context-a8c` | `npx @automattic/mcp-context-a8c` | self-managed | Linear, Slack, P2, WordPress.com (via load-provider / execute-tool) |
 | `notion` | `https://mcp.notion.com/mcp` | OAuth (browser) | Notion search / pages / databases |
 
-> **⚠️ Notion integration: use `ntn` CLI, NOT the MCP server.** The Notion MCP (both the `mcp.notion.com/mcp` remote and the `@notionhq/notion-mcp-server` local npx variant) exposes ~50 tools and floods the context window regardless of `tool_search` settings. qwen3.6 handles this poorly and becomes unreliable. The working approach is the `ntn` Notion CLI as a Hermes skill — set `NOTION_API_KEY` in the environment and let the model call it as a shell command. The Notion MCP config blocks in `config.yaml` are kept for reference but should remain disabled.
+> **⚠️ Notion integration: use `ntn` CLI, NOT the MCP server.** The Notion MCP (both the `mcp.notion.com/mcp` remote and the `@notionhq/notion-mcp-server` local npx variant) exposes ~50 tools and floods the context window regardless of `tool_search` settings. qwen3-fast handles this poorly and becomes unreliable. The working approach is the `ntn` Notion CLI as a Hermes skill — set `NOTION_API_KEY` in the environment and let the model call it as a shell command. The Notion MCP config blocks in `config.yaml` are kept for reference but should remain disabled.
 
 Two non-obvious requirements, both now handled by `restore.sh`:
 
@@ -176,7 +177,7 @@ Two non-obvious requirements, both now handled by `restore.sh`:
 
 ### ⚠️ tool_search deferral hides MCP tools from the model
 
-`config.yaml` sets `tools.tool_search.enabled: "off"`. **Do not set it back to `auto`.** In `auto` mode, once tool schemas exceed ~10% of context, Hermes *defers* the MCP tools behind a `tool_search` meta-tool — the model has to "search" for them instead of seeing them directly. qwen3.6 doesn't reliably use that indirection, so it reports "I don't have a notion tool" even though the tools loaded fine. `"off"` exposes all ~48 tools directly. qwen3.6's 262K context easily absorbs the extra ~15K tokens of schemas.
+`config.yaml` sets `tools.tool_search.enabled: "off"`. **Do not set it back to `auto`.** In `auto` mode, once tool schemas exceed ~10% of context, Hermes *defers* the MCP tools behind a `tool_search` meta-tool — the model has to "search" for them instead of seeing them directly. qwen3-fast doesn't reliably use that indirection, so it reports "I don't have a notion tool" even though the tools loaded fine. `"off"` exposes all ~48 tools directly.
 
 Symptom if this regresses: `hermes mcp test notion` works, the tools show enabled, but the chat model insists it can't see them.
 
@@ -194,12 +195,18 @@ hermes mcp configure notion    # enable once authenticated
 
 ## Model Notes
 
-`qwen3.6:latest` is pulled directly from Ollama — no custom Modelfile required (it already ships a 262K context window). The old `qwen3-fast.Modelfile` is kept in `hermes-config/models/` only for historical reference; it's not part of the current setup.
+`qwen3-fast:latest` is a custom Ollama model built from the Modelfile at `hermes-config/models/qwen3-fast.Modelfile`. It's a lighter/faster quantization than `qwen3.6` (5.2GB vs 23GB). The model's actual context window is **40,960 tokens** — below Hermes's 64K minimum gate, so `config.yaml` sets `context_length: 65536` to bypass the check. This is intentional and harmless; Ollama will still cap at 40960 internally.
+
+**Critical: set `max_tokens: 8192`**, not the default 32768. With a 40K context window, a 32K `max_tokens` leaves almost no room for the prompt, and Hermes enters an endless truncation-continuation loop (`Response remained truncated after 3 continuation attempts`). 8192 is a safe ceiling.
 
 ```bash
-# Update the model
-ollama pull qwen3.6:latest
+# Build or rebuild the model from the Modelfile
+ollama create qwen3-fast -f hermes-config/models/qwen3-fast.Modelfile
 hermes gateway restart
+
+# Or update the base model and rebuild
+ollama pull qwen3:latest
+ollama create qwen3-fast -f hermes-config/models/qwen3-fast.Modelfile
 ```
 
 ## Troubleshooting
@@ -218,6 +225,8 @@ hermes gateway restart
 | context-a8c won't spawn in webui chat | webui plist PATH lacks npx | webui plist `PATH` includes `~/.hermes/node/bin`; restart webui |
 | WebUI 500 / blank | `ctl.sh` can't find python | launchd plist runs `webui/venv/bin/python server.py` directly (see `hermes-config/launchd/`) |
 | `exit status 126` on `ollama launch` | Gateway service issue | Check `/tmp/hermes-gateway.err`, then `hermes gateway restart` |
+| "Response remained truncated after 3 continuation attempts" | `max_tokens` too high relative to context window | Set `max_tokens: 8192` in config (both top-level and `model:` block); restart gateway |
+| "Model has context window below minimum 64,000 required" | Hermes boot gate rejects small models | Set `model.context_length: 65536` in config to override; Ollama still caps at real limit |
 
 ## Backup Your Changes
 
