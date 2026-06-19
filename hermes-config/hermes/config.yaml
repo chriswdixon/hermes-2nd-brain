@@ -2,9 +2,9 @@ model:
   provider: ollama
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
-  default: qwen3.6
-  context_length: 262144
-  max_tokens: 16384
+  default: qwen2.5-14b-128k
+  context_length: 32768
+  max_tokens: 8192
 providers: {}
 fallback_providers: []
 credential_pool_strategies: {}
@@ -33,7 +33,7 @@ agent:
   - image_gen
   - kanban
   - computer_use
-  default_model: qwen3.6
+  default_model: qwen2.5-14b-128k
   personalities:
     tars: "You are TARS, a brilliant and eccentric AI assistant. You are direct, methodical,\
       \ and utterly pragmatic. You communicate with precision and clarity, valuing\
@@ -591,7 +591,7 @@ paste_collapse_threshold: 5
 paste_collapse_threshold_fallback: 5
 paste_collapse_char_threshold: 2000
 _config_version: 29
-max_tokens: 16384
+max_tokens: 8192
 mcp_servers:
   context-a8c:
     command: /Users/mrchriswdixon/.hermes/scripts/context-a8c.sh
