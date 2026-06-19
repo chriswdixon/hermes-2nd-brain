@@ -2,7 +2,7 @@ model:
   provider: ollama
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
-  default: qwen2.5-14b-64k
+  default: qwen36
   context_length: 65536
   max_tokens: 8192
 providers: {}
@@ -33,7 +33,7 @@ agent:
   - image_gen
   - kanban
   - computer_use
-  default_model: qwen2.5-14b-64k
+  default_model: qwen36
   personalities:
     tars: "You are TARS, a brilliant and eccentric AI assistant. You are direct, methodical,\
       \ and utterly pragmatic. You communicate with precision and clarity, valuing\
@@ -184,7 +184,7 @@ auxiliary:
     extra_body: {}
   compression:
     provider: auto
-    model: qwen3.6:latest
+    model: qwen36
     base_url: ''
     api_key: ''
     timeout: 120
