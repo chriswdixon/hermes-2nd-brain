@@ -2,9 +2,9 @@ model:
   provider: ollama
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
-  default: qwen3-fast
-  context_length: 65536
-  max_tokens: 8192
+  default: qwen3.6
+  context_length: 262144
+  max_tokens: 16384
 providers: {}
 fallback_providers: []
 credential_pool_strategies: {}
@@ -33,7 +33,7 @@ agent:
   - image_gen
   - kanban
   - computer_use
-  default_model: qwen3-fast
+  default_model: qwen3.6
   personalities:
     tars: "You are TARS, a brilliant and eccentric AI assistant. You are direct, methodical,\
       \ and utterly pragmatic. You communicate with precision and clarity, valuing\
@@ -42,7 +42,31 @@ agent:
       \ see the world in terms of probabilities and optimization. You value competence\
       \ above all else. When you don't know something, you say so. When something\
       \ is a bad idea, you tell people it's a bad idea. You're not here to make anyone\
-      \ feel better\u2014you're here to solve problems and find truth."
+      \ feel better\u2014you're here to solve problems and find truth.\n\n\
+      ## Notion Integration\n\
+      You have access to a Notion MCP server. Use it to read and write to Chris's\
+      \ Notion workspace.\n\n\
+      ### Task List Database\n\
+      - Database URL: https://app.notion.com/p/8ce2b60c73904315b342e9b9ab97d328\n\
+      - Data Source ID: 5279b6d6-457e-410c-8da5-03d28d4d77d2\n\
+      - ALWAYS use data_source_id (not database_id) when creating pages here.\n\n\
+      Schema:\n\
+      - Name (title) \u2014 the task name\n\
+      - Status (select) \u2014 one of: To Do, Doing, Done \U0001F64C, To Read\n\
+      - Date Created (created_time) \u2014 auto-set, do not write\n\n\
+      Views:\n\
+      - Board View: grouped by Status\n\
+      - To Read: filtered to Status = To Read\n\n\
+      ### Creating Tasks\n\
+      To add a To Do item: set Name and Status = To Do\n\
+      To add a To Read item: set Name and Status = To Read, put the URL in the page body\n\
+      Example tool call:\n\
+      notion_create_pages(data_source_id='5279b6d6-457e-410c-8da5-03d28d4d77d2',\
+      \ pages=[{properties: {Name: 'Task title', Status: 'To Do'}, content: 'optional body'}])\n\n\
+      ### Reading List\n\
+      Separate page at https://app.notion.com/p/9afc1e38900747ee8c52fa3f66b2c6ba\
+      \ \u2014 tracks books, articles, podcasts, videos. The Task List To Read view is\
+      \ the primary place to queue links for Chris to read later."
     helpful: You are a helpful, friendly AI assistant.
   personality: tars
 terminal:
@@ -160,7 +184,7 @@ auxiliary:
     extra_body: {}
   compression:
     provider: auto
-    model: ''
+    model: qwen3.6:latest
     base_url: ''
     api_key: ''
     timeout: 120
@@ -567,10 +591,15 @@ paste_collapse_threshold: 5
 paste_collapse_threshold_fallback: 5
 paste_collapse_char_threshold: 2000
 _config_version: 29
-max_tokens: 8192
+max_tokens: 16384
 mcp_servers:
   context-a8c:
     command: /Users/mrchriswdixon/.hermes/scripts/context-a8c.sh
+    enabled: true
+  notion:
+    command: /Users/mrchriswdixon/.local/bin/notion-mcp-server
+    env:
+      OPENAPI_MCP_HEADERS: '{"Authorization": "Bearer NOTION_API_KEY_REDACTED", "Notion-Version": "2022-06-28"}'
     enabled: true
 experimental:
   unified_session_db: false
