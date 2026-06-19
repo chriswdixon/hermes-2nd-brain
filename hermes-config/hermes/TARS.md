@@ -37,17 +37,69 @@ TARS has two MCP servers wired in via `config.yaml`:
 
 **context-a8c** — The Automattic internal MCP server. Gives TARS access to Linear, Slack, P2 blogs, and WordPress.com context. OAuth tokens are per-machine and not in the backup — after a restore you re-auth manually, which takes thirty seconds and is fine.
 
-**Notion** — Currently disabled by default (see config). The Notion MCP dumps ~50 tools into context at once and sends qwen3.6 into an unreliable spiral. Instead, I use the `ntn` Notion CLI as a shell skill. Works better. Less drama.
-
-One hard-won lesson: `tools.tool_search.enabled` must be set to `"off"` in config if you enable Notion MCP. In `auto` mode, Hermes hides MCP tool schemas behind a meta-tool past 10% context usage and qwen3.6 won't bother discovering them. The model will just tell you it doesn't have the tool. Turning `tool_search` off exposes all tools directly and the problem goes away.
+**Notion** — Enabled via a wrapper script (see Secrets Management below). The Notion MCP dumps ~50 tools into context at once and sends qwen3.6 into an unreliable spiral, so `tools.tool_search.enabled` must stay `auto` or `off` — if set to `auto`, Hermes hides MCP tool schemas behind a meta-tool past 10% context usage and qwen3.6 won't bother discovering them. The model will just tell you it doesn't have the tool. Turning `tool_search` off exposes all tools directly and the problem goes away.
 
 ## Secrets Management
 
-API keys are stored in [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/) — not in `config.yaml`. MCP servers that need credentials are wrapped in shell scripts under `hermes-config/hermes/scripts/` that pull values at runtime via `bw-secret value <KEY>`.
+API keys live in [Bitwarden Secrets Manager](https://bitwarden.com/products/secrets-manager/), never in `config.yaml` or the backup repo. The setup has three layers:
 
-This means the backup repo (this one) contains no credentials. After a restore, re-auth the MCP servers manually:
-- `hermes mcp login notion` for Notion (browser flow)
-- context-a8c self-auths via OAuth
+**1. Bitwarden Secrets Manager (BWS)**
+
+Secrets are stored in a BWS project called "AI Toolage". The `bws` CLI (`~/.local/bin/bws`) pulls them at runtime. A read-only machine account access token is stored in the macOS login Keychain under the service name `bws_access_token`.
+
+```bash
+# List secrets (no values shown)
+bw-secret list
+
+# Fetch a specific value
+bw-secret value NOTION_API_KEY
+```
+
+`bw-secret` is a helper script at `~/.local/bin/bw-secret` that reads the access token from Keychain and wraps the `bws` CLI. It works fine interactively but can't be used from launchd (Keychain isn't accessible in that environment without a login session).
+
+**2. launchd plists carry the BWS access token**
+
+Because launchd services run outside the login session and can't touch the Keychain, the BWS access token is injected directly into the plist `EnvironmentVariables`. This gives MCP wrapper scripts a way to call `bws` without going through Keychain:
+
+```xml
+<key>BWS_ACCESS_TOKEN</key>
+<string>0.xxx...</string>
+```
+
+The BWS access token is a machine-scoped service account credential — this is exactly what it's designed for. It's not a user password. It's scoped read-only to one project and is revocable.
+
+**3. MCP wrapper scripts fetch at spawn time**
+
+MCP servers that need credentials don't get them via config — they get a wrapper script instead. The wrapper fetches the secret from BWS at startup using the `BWS_ACCESS_TOKEN` from the environment, constructs the auth header, and execs the real binary:
+
+```bash
+# hermes-config/hermes/scripts/notion-mcp.sh
+NOTION_TOKEN="$(BWS_ACCESS_TOKEN="${BWS_ACCESS_TOKEN}" \
+  /Users/mrchriswdixon/.local/bin/bws secret list --output json \
+  | python3 -c '...')"
+export OPENAPI_MCP_HEADERS="{\"Authorization\": \"Bearer ${NOTION_TOKEN}\", ...}"
+exec /Users/mrchriswdixon/.local/bin/notion-mcp-server "$@"
+```
+
+The Notion API key never touches disk. Rotating it in Bitwarden is the only thing that needs to happen — no config files, no plists, no restarts required.
+
+**After a restore**, the BWS access token needs to be put back into the launchd plists manually (it's not in the backup — that would defeat the point). Get it from vault.bitwarden.com or another machine's Keychain, then:
+
+```bash
+# Add to Keychain for interactive use
+bw-secret set-token
+
+# Update the plists
+# Edit BWS_ACCESS_TOKEN in both:
+# ~/Library/LaunchAgents/com.hermes.gateway.plist
+# ~/Library/LaunchAgents/com.hermes.webui.plist
+
+# Reload launchd (restart alone isn't enough — plist env won't update)
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.hermes.gateway.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.hermes.gateway.plist
+```
+
+Note: `hermes gateway restart` only restarts the process. It does NOT reload the plist environment. If you change anything in the plist, you must `bootout` and `bootstrap` — otherwise launchd keeps running the old environment and you'll spend an afternoon wondering why nothing works.
 
 ## Config That Matters
 
@@ -89,6 +141,10 @@ That script rebuilds both Python venvs, pulls the qwen3.6 model, restores config
 **Port confusion.** The web UI is on port `8787`. Port `9119` is the agent's own dashboard — a completely different thing.
 
 **launchd PATH.** Both launchd plists need `~/.hermes/node/bin` on PATH explicitly, or npx-based MCP servers can't spawn. This is easy to forget when writing a plist by hand and costs about forty-five minutes to diagnose.
+
+**launchd doesn't reload plists on restart.** `hermes gateway restart` restarts the process but the service keeps its original environment. If you change anything in a plist — env vars, paths, anything — you must `bootout` and `bootstrap` to force launchd to re-read it. This is not obvious and will make you think your changes aren't working when they just haven't been loaded yet.
+
+**Use absolute paths in wrapper scripts.** `~` expands correctly in your terminal but may not resolve as expected inside launchd subprocesses. Use `/Users/mrchriswdixon/...` explicitly in any script that launchd spawns.
 
 ## Daily Briefings
 
