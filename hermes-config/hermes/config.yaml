@@ -597,9 +597,7 @@ mcp_servers:
     command: /Users/mrchriswdixon/.hermes/scripts/context-a8c.sh
     enabled: true
   notion:
-    command: /Users/mrchriswdixon/.local/bin/notion-mcp-server
-    env:
-      OPENAPI_MCP_HEADERS: '{"Authorization": "Bearer NOTION_API_KEY_REDACTED", "Notion-Version": "2022-06-28"}'
+    command: /Users/mrchriswdixon/.hermes/scripts/notion-mcp.sh
     enabled: true
 experimental:
   unified_session_db: false
