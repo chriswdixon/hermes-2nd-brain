@@ -2,7 +2,9 @@
 
 ## What It Is
 
-TARS is a locally-running AI agent I named after the robot from *Interstellar*. It does whatever I tell it to, refuses to be dramatic about it, and occasionally surprises me with competence. It runs on my Mac, talks to nothing outside my network unless I tell it to, and is available 24/7 regardless of what Anthropic or OpenAI are doing with their uptime.
+A second brain is a searchable knowledge base that grows with you. Notes, tasks, meetings -- all of it captured and connected, including the connections you didn't know you needed to make. The idea is that your system remembers things so you don't have to, and surfaces the right context at the right time.
+
+TARS is my version of that, with a local AI agent running on top of it. I named it after the robot from *Interstellar*. It does whatever I tell it to, refuses to be dramatic about it, and occasionally surprises me with competence. It runs on my Mac, talks to nothing outside my network unless I tell it to, and is available 24/7 regardless of what Anthropic or OpenAI are doing with their uptime.
 
 The name comes from a custom identity file (`~/.hermes/SOUL.md`) that gets loaded before anything else. Swap that file out and you get a different personality. Lose it during a reinstall and you'll spend twenty minutes wondering why your assistant keeps introducing itself as "Hermes." (This happened.)
 
