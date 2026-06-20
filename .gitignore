@@ -9,6 +9,7 @@
 # Allow the backup tree and docs
 !.gitignore
 !README.md
+!LICENSE
 !hermes-config/
 !hermes-config/**
 
