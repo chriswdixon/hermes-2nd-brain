@@ -1,4 +1,4 @@
-# TARS: My Local AI Agent Setup
+# TARS - My 2nd Brain with an AI Attitude
 
 ## What It Is
 
