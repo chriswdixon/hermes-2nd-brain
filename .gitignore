@@ -13,6 +13,9 @@
 !hermes-config/
 !hermes-config/**
 
+# Block launchd plists -- they contain the BWS_ACCESS_TOKEN
+hermes-config/launchd/
+
 # Within the backup tree, still block anything secret-shaped
 hermes-config/**/.env
 hermes-config/**/*.key

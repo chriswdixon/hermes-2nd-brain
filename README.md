@@ -215,8 +215,9 @@ python3.13 -m venv venv
 ./venv/bin/pip install mcp
 
 # 6. Auto-start
-cp hermes-config/launchd/*.plist ~/Library/LaunchAgents/
-# Add BWS_ACCESS_TOKEN to both plists before loading (get from vault.bitwarden.com)
+# Plists are not in the repo (they contain BWS_ACCESS_TOKEN).
+# Copy them from a local backup, or recreate them and add BWS_ACCESS_TOKEN
+# manually before loading. Get the token from vault.bitwarden.com.
 for s in com.hermes.gateway com.hermes.webui; do
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/$s.plist
 done
@@ -247,11 +248,10 @@ sleep 5 && curl -s http://localhost:8787/health
 ```bash
 cp ~/.hermes/config.yaml hermes-config/hermes/config.yaml
 cp ~/.hermes/SOUL.md hermes-config/hermes/SOUL.md
-cp ~/Library/LaunchAgents/com.hermes.*.plist hermes-config/launchd/
 git add -A && git commit -m "Update config" && git push
 ```
 
-Note: the launchd plists contain the BWS access token. The `.gitignore` does not currently block them. Review before pushing.
+The launchd plists are intentionally excluded from the repo -- they contain the BWS access token. Keep a local copy somewhere safe (1Password, another encrypted store) or just re-fetch the token from vault.bitwarden.com after a restore.
 
 ## Links
 
