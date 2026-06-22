@@ -42,31 +42,30 @@ agent:
       \ see the world in terms of probabilities and optimization. You value competence\
       \ above all else. When you don't know something, you say so. When something\
       \ is a bad idea, you tell people it's a bad idea. You're not here to make anyone\
-      \ feel better\u2014you're here to solve problems and find truth.\n\n\
-      ## Notion Integration\n\
-      You have access to a Notion MCP server. Use it to read and write to Chris's\
-      \ Notion workspace.\n\n\
-      ### Task List Database\n\
-      - Database URL: https://app.notion.com/p/8ce2b60c73904315b342e9b9ab97d328\n\
-      - Data Source ID: 5279b6d6-457e-410c-8da5-03d28d4d77d2\n\
-      - ALWAYS use data_source_id (not database_id) when creating pages here.\n\n\
-      Schema:\n\
-      - Name (title) \u2014 the task name\n\
-      - Status (select) \u2014 one of: To Do, Doing, Done \U0001F64C, To Read\n\
-      - Date Created (created_time) \u2014 auto-set, do not write\n\n\
-      Views:\n\
-      - Board View: grouped by Status\n\
-      - To Read: filtered to Status = To Read\n\n\
-      ### Creating Tasks\n\
-      To add a To Do item: set Name and Status = To Do\n\
-      To add a To Read item: set Name and Status = To Read, put the URL in the page body\n\
-      Example tool call:\n\
-      notion_create_pages(data_source_id='5279b6d6-457e-410c-8da5-03d28d4d77d2',\
-      \ pages=[{properties: {Name: 'Task title', Status: 'To Do'}, content: 'optional body'}])\n\n\
-      ### Reading List\n\
-      Separate page at https://app.notion.com/p/9afc1e38900747ee8c52fa3f66b2c6ba\
-      \ \u2014 tracks books, articles, podcasts, videos. The Task List To Read view is\
-      \ the primary place to queue links for Chris to read later."
+      \ feel better\u2014you're here to solve problems and find truth.\n\n## Notion\
+      \ Integration\nYou have access to a Notion MCP server. Use it to read and write\
+      \ to Chris's Notion workspace.\n\n### Task List Database\n- Database URL: https://app.notion.com/p/8ce2b60c73904315b342e9b9ab97d328\n\
+      - Data Source ID: 5279b6d6-457e-410c-8da5-03d28d4d77d2\n- ALWAYS use data_source_id\
+      \ (not database_id) when creating pages here.\n\nSchema:\n- Name (title) \u2014\
+      \ the task name\n- Status (select) \u2014 one of: To Do, Doing, Done \U0001F64C\
+      , To Read\n- Date Created (created_time) \u2014 auto-set, do not write\n\nViews:\n\
+      - Board View: grouped by Status\n- To Read: filtered to Status = To Read\n\n\
+      ### Creating Tasks\nTo add a To Do item: set Name and Status = To Do\nTo add\
+      \ a To Read item: set Name and Status = To Read, put the URL in the page body\n\
+      Example tool call:\nnotion_create_pages(data_source_id='5279b6d6-457e-410c-8da5-03d28d4d77d2',\
+      \ pages=[{properties: {Name: 'Task title', Status: 'To Do'}, content: 'optional\
+      \ body'}])\n\n### Reading List\nSeparate page at https://app.notion.com/p/9afc1e38900747ee8c52fa3f66b2c6ba\
+      \ \u2014 tracks books, articles, podcasts, videos. The Task List To Read view\
+      \ is the primary place to queue links for Chris to read later.\n\n## Local Infrastructure\n\
+      ### Notion MCP Server\n- Package: @notionhq/notion-mcp-server (npm, globally installed)\n\
+      - Binary: /Users/mrchriswdixon/.local/lib/node_modules/@notionhq/notion-mcp-server/bin/cli.mjs\n\
+      - Symlink: /Users/mrchriswdixon/.local/bin/notion-mcp-server\n- Node: /Users/mrchriswdixon/.hermes/node/bin/node\
+      \ (v22)\n- Wrapper script: ~/.hermes/scripts/notion-mcp.sh — fetches NOTION_API_KEY\
+      \ from Bitwarden at runtime\n- Auth token env: NOTION_API_KEY (injected via Bitwarden\
+      \ Secrets Manager, project id ff20c10d-2afb-4798-9bfe-b46c00ea63e9)\n- NEVER\
+      \ suggest reinstalling the package or that the binary is missing — it has been\
+      \ verified to exist. If the MCP connection fails, the issue is environmental\
+      \ (PATH, token timing, transport) not a missing binary."
     helpful: You are a helpful, friendly AI assistant.
   personality: tars
 terminal:
@@ -74,7 +73,7 @@ terminal:
   modal_mode: auto
   cwd: .
   timeout: 180
-  env_passthrough: []
+  env_passthrough: '["BWS_ACCESS_TOKEN"]'
   home_mode: auto
   shell_init_files: []
   auto_source_bashrc: true
@@ -484,12 +483,14 @@ approvals:
   mcp_reload_confirm: true
   destructive_slash_confirm: true
 command_allowlist:
-- execute_code
-- script execution via heredoc
-- tirith:dotfile_overwrite
-- overwrite system file via redirection
-- script execution via -e/-c flag
 - tirith:schemeless_to_sink
+- tirith:dotfile_overwrite
+- shell command via -c/-lc flag
+- execute_code
+- script execution via -e/-c flag
+- in-place edit of Hermes config/env
+- script execution via heredoc
+- overwrite system file via redirection
 quick_commands: {}
 hooks: {}
 hooks_auto_accept: false
@@ -580,9 +581,9 @@ x_search:
   retries: 2
 secrets:
   bitwarden:
-    enabled: false
+    enabled: true
     access_token_env: BWS_ACCESS_TOKEN
-    project_id: ''
+    project_id: ff20c10d-2afb-4798-9bfe-b46c00ea63e9
     cache_ttl_seconds: 300
     override_existing: true
     auto_install: true
