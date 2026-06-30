@@ -1,8 +1,8 @@
 # Hermes 2nd Brain Backup
 
-Complete local Hermes Agent v0.16.0 setup: Ollama (qwen3.6), native WebUI, Gateway, and TARS personality. Auto-starts on reboot via launchd. API keys stored in Bitwarden Secrets Manager.
+Complete Hermes Agent setup: Anthropic Claude API (haiku-4-5), native WebUI, Gateway, and TARS personality. Auto-starts on reboot via launchd. Secrets managed via Bitwarden Secrets Manager and gateway token auth. Tasks backed by Obsidian vault, not Notion.
 
-**Status:** Production-ready, auto-starting on reboot.
+**Status:** Production-ready, auto-starting on reboot. Last updated: June 30, 2026.
 
 ## TL;DR -- Restore Everything
 
@@ -20,11 +20,12 @@ After restore, two manual steps:
 
 ## Current Architecture
 
-Native macOS setup. No Docker. Three moving parts:
+Native macOS setup. No Docker. Two moving parts:
 
-- **Hermes Agent v0.16.0** -- `~/.hermes/hermes-agent`, Python 3.13 venv
+- **Hermes Agent** -- `~/.hermes/hermes-agent`, Python 3.13 venv
 - **Hermes WebUI** ([nesquena/hermes-webui](https://github.com/nesquena/hermes-webui)) -- `~/.hermes/webui`, Python 3.13 venv, serves http://localhost:8787
-- **Ollama** -- running `qwen3.6:latest` on http://127.0.0.1:11434
+- **Model:** Claude (haiku-4-5) via Anthropic API, with Ollama (qwen36) as fallback
+- **Task storage:** Obsidian vault (`/Users/mrchriswdixon/Obsidian/SecondBrain`), not Notion
 
 Identity is **TARS**, defined in `SOUL.md`. See the warning below.
 
@@ -32,13 +33,14 @@ Identity is **TARS**, defined in `SOUL.md`. See the warning below.
 
 | Thing | Correct value | Common wrong value |
 |-------|---------------|--------------------|
-| Model | `qwen36` (qwen3.6:latest) | ~~qwen3-fast~~ (removed; context window too small) |
-| Provider | `ollama` | ~~ollama-launch~~ (demands a nonexistent API key) |
-| WebUI port | `8787` | ~~9119~~ (that's the agent's own `hermes dashboard`, different thing) |
+| Model | `claude-haiku-4-5` | ~~qwen36~~ (fallback only) |
+| Provider | `anthropic` | ~~ollama~~ (now fallback) |
+| Context length | `131072` (Claude limit) | ~~65536~~ (that was Ollama) |
+| WebUI port | `8787` | ~~9119~~ (that's the agent's own `hermes dashboard`) |
 | Python | `3.13` | ~~3.14~~ (agent requires `<3.14`) |
-| Identity source | `~/.hermes/SOUL.md` | ~~config.yaml personalities~~ (those feed the selector, not the default identity) |
+| Identity source | `~/.hermes/SOUL.md` | ~~config.yaml personalities~~ (those feed the selector) |
 | Services | `com.hermes.gateway`, `com.hermes.webui` | ~~com.hermes.agent~~ (removed) |
-| tool_search | `auto` | ~~off~~ (only needed if Notion MCP floods context) |
+| Task CLI | `vault-tasks.py` (Obsidian) | ~~notion-mcp~~ (Notion retired) |
 
 ### SOUL.md is the identity. It is not optional.
 
@@ -123,57 +125,76 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.hermes.gateway.plist
 
 ## Repo Contents
 
+What's backed up (committed to git):
 ```
 hermes-config/
-├── restore.sh                   # Full rebuild script (start here)
+├── restore.sh                    # Full rebuild script (start here)
 ├── hermes/
-│   ├── config.yaml              # Agent config: qwen3.6 via ollama, TARS default
-│   ├── SOUL.md                  # TARS identity -- the primary persona source
-│   ├── TARS.md                  # Full setup writeup / blog post draft
-│   ├── MEMORY.md                # Persistent memory snapshot
-│   ├── scripts/
-│   │   └── notion-mcp.sh        # Notion MCP wrapper (fetches key from BWS at spawn)
-│   └── personas/                # Persona reference docs
-├── launchd/                     # Auto-start services (macOS)
-│   ├── com.hermes.gateway.plist
-│   └── com.hermes.webui.plist
-├── models/
-│   └── qwen3-fast.Modelfile     # Legacy model (kept for reference; qwen3.6 is current)
-└── webui-docker/                # Legacy Docker setup (unused; kept for reference)
+│   ├── config.yaml               # Agent config: Anthropic Claude, TARS personality
+│   ├── cron-jobs.json            # Scheduled cron jobs (daily-brief, p2-monitor, etc)
+│   ├── SOUL.md                   # TARS identity -- the primary persona source
+│   ├── TARS.md                   # Full setup writeup
+│   ├── MEMORY.md                 # Persistent memory snapshot
+│   ├── scripts/                  # Automation: dual-brief.py, vault-tasks.py, etc
+│   └── personas/                 # Persona reference docs
+├── webui/                        # WebUI config snapshot
+└── webui-docker/                 # Legacy Docker setup (kept for reference)
 ```
+
+What's **NOT** in the repo (secrets, excluded by .gitignore):
+- `~/.hermes/.env` (contains BWS_ACCESS_TOKEN)
+- `~/.hermes/auth.json` (OAuth tokens)
+- launchd plists (they contain BWS_ACCESS_TOKEN in EnvironmentVariables)
+- model blobs (GGUF/BIN files)
+- node_modules, venvs, session logs, cron output
 
 ## config.yaml -- the parts that matter
 
 ```yaml
 model:
-  provider: ollama           # NOT ollama-launch
+  provider: anthropic           # Primary provider
+  default: claude-haiku-4-5
+  context_length: 131072        # Claude limit
+  max_tokens: 8192
+
+fallback_providers:
+- provider: ollama              # Fallback when Claude unavailable
+  model: qwen36
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
-  default: qwen36
-  context_length: 65536      # qwen3.6 has 128K real; Hermes requires >=64K to boot
-  max_tokens: 8192           # higher causes truncation-continuation loops
+
+toolsets:
+- hermes-cli
 
 mcp_servers:
   context-a8c:
     command: /Users/mrchriswdixon/.hermes/scripts/context-a8c.sh
     enabled: true
-  notion:
-    command: /Users/mrchriswdixon/.hermes/scripts/notion-mcp.sh
-    enabled: true
 ```
+
+**Anthropic API:**
+- Auth: token injected by gateway (no local config needed)
+- Model: claude-haiku-4-5 (fast, cheap, good enough for most tasks)
+
+**Obsidian tasks (no longer Notion):**
+- Vault: `/Users/mrchriswdixon/Obsidian/SecondBrain`
+- CLI: `python3 /Users/mrchriswdixon/.hermes/scripts/vault-tasks.py`
+- Use: `add`, `list --open`, `set-status`, `done` (see config.yaml for full command reference)
 
 ## MCP Servers
 
 | Server | Transport | Auth | Provides |
 |--------|-----------|------|----------|
 | `context-a8c` | wrapper script -> npx | OAuth (self-managed) | Linear, Slack, P2, WordPress.com |
-| `notion` | wrapper script -> notion-mcp-server | API key via BWS | Notion pages, databases, search |
 
-### Notion MCP gotcha
+**Note:** Notion MCP has been retired. Tasks are managed via local Obsidian vault instead (see Obsidian tasks section above).
 
-The Notion MCP dumps ~50 tools into context at once. With `tools.tool_search.enabled: auto`, Hermes defers those schemas behind a meta-tool once context hits 10% usage. qwen3.6 won't use the indirection and reports "I don't have a notion tool." Setting `tool_search` to `off` exposes all tools directly. Current config leaves it at `auto` -- switch to `off` if Notion stops responding.
+### context-a8c setup
 
-### context-a8c gotcha
+OAuth credentials are stored in `~/.hermes/auth.json`. First-time setup:
+```bash
+hermes mcp login context-a8c
+```
 
 Both launchd plists need `~/.hermes/node/bin` on PATH explicitly or npx can't spawn. This is already in the plists. Don't remove it.
 
@@ -231,17 +252,15 @@ sleep 5 && curl -s http://localhost:8787/health
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | "I'm Hermes! How can I help?" | Stock SOUL.md | `cp hermes-config/hermes/SOUL.md ~/.hermes/SOUL.md && hermes gateway restart` |
-| "Provider 'ollama-launch' ... no API key" | Wrong provider | Set `provider: ollama`, restart gateway |
+| "Provider 'anthropic' ... error" | Bad or missing API key | Token should be injected by gateway; check `hermes mcp test` |
+| "Model context window below 64K" | Gateway init validation | Claude is 131K; if using Ollama fallback, ensure `context_length: 65536` |
 | "AIAgent not available" | WebUI venv missing agent | `~/.hermes/webui/venv/bin/pip install -e ~/.hermes/hermes-agent` |
 | `requires a different Python: 3.14` | Wrong Python version | Rebuild venv with `python3.13` |
 | MCP `requires the 'mcp' Python SDK` | SDK missing | `pip install mcp` in both venvs |
 | npx MCP server won't spawn | launchd PATH missing node | Check plist PATH includes `~/.hermes/node/bin`; bootout/bootstrap |
-| Notion MCP "I don't have that tool" | tool_search deferring schemas | Set `tools.tool_search.enabled: "off"`, restart gateway |
-| Notion MCP 401 | Stale or rotated API key in BWS | Update `NOTION_API_KEY` in Bitwarden; restart gateway |
-| Notion MCP "Doesn't contain a decryption key" | BWS_ACCESS_TOKEN missing from launchd env | Add token to plist, bootout/bootstrap (not just restart) |
-| Plist change not taking effect | launchd cached old env | bootout/bootstrap both plists; `hermes gateway restart` is not enough |
 | "Response remained truncated after 3 continuation attempts" | max_tokens too high | Set `max_tokens: 8192`; restart gateway |
-| "Model has context window below minimum 64,000" | Hermes boot gate | Set `model.context_length: 65536`; Ollama still caps at real limit |
+| Plist change not taking effect | launchd cached old env | bootout/bootstrap both plists; `hermes gateway restart` is not enough |
+| `vault-tasks.py: vault not found` | Wrong Obsidian path | Check `/Users/mrchriswdixon/Obsidian/SecondBrain` exists; see vault-tasks.py source |
 
 ## Backup Your Changes
 
