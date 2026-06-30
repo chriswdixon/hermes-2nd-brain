@@ -1,0 +1,305 @@
+{
+  "jobs": [
+    {
+      "id": "650314d626e2",
+      "name": "p2-monitor",
+      "prompt": "You are running a P2 site monitor that reads new posts from all accessible WordPress.com P2 blogs and creates tasks in the user's local Obsidian vault (Tasks/ folder).\n\nSteps:\n1. Load state from ~/.hermes/cron/output/p2-state/state.json to know what's already been saved (if file exists)\n2. Call wpcom MCP p2-sites tool (mcp_context_a8c_execute_tool, provider=wpcom, subtool=p2-sites) to get all blogs with their blog_id and blog_name\n3. For each blog, use the wpcom MCP posts or reader tool to fetch recent posts since the last_seen_post_id from state.json\n4. For each NEW post found, create a task in the Obsidian vault by running this shell command:\n     python3 /Users/mrchriswdixon/.hermes/scripts/vault-tasks.py add \"<TITLE>\" --status \"To Do\" --body \"<BODY>\"\n   - <TITLE> format:\n     \u2022 If post title or body contains \"[New Mention]\" or \"mrchriswdixon\": `[ALERT] [P2: blog_name] post_title`\n     \u2022 Otherwise: `[P2: blog_name] post_title`\n   - <BODY>: the post URL, title (if different from subject), and full body/excerpt\n5. Update state.json with each blog's latest seen post_id after successful save\n\nAfter collecting all new posts, output a summary to stdout like:\n\"P2 Monitor run complete \u2014 found X new posts across Y blogs. Saved {Z} tasks to the vault (including N alerts). State file updated.\"\n\nIf no new posts, just output \"P2 Monitor: No new posts found.\"\n\nIMPORTANT NOTES:\n- Tasks are written to the local Obsidian vault via vault-tasks.py. Do NOT use Notion (the Notion MCP and ntn CLI are retired).\n- The `[ALERT]` prefix in the title is how the user identifies mention-worthy items in the Tasks list.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * *",
+        "display": "0 7 * * *"
+      },
+      "schedule_display": "0 7 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 9
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-22T09:47:50.758366-05:00",
+      "next_run_at": "2026-07-01T07:00:00-05:00",
+      "last_run_at": "2026-06-30T07:00:27.935261-05:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "e0bf2bd5150e",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "3dda72615d49",
+      "name": "quill-meetings-pull",
+      "prompt": "Run: python3.14 /Users/mrchriswdixon/.hermes/skills/quill-sync/scripts/extract-meetings.py --hours 48",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 240,
+        "display": "every 240m"
+      },
+      "schedule_display": "every 240m",
+      "repeat": {
+        "times": null,
+        "completed": 29
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-25T12:34:07.698164-05:00",
+      "next_run_at": "2026-06-30T16:06:50.275494-05:00",
+      "last_run_at": "2026-06-30T12:06:50.275494-05:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "77bf88f229ad",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "a550ecc965ad",
+      "name": "daily-brief-jean",
+      "prompt": "Run the daily brief for Jean on weekdays. The script is at ~./hermes/scripts/dual-brief.py --briefing jean",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "brief-jean.sh",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 1-5",
+        "display": "0 8 * * 1-5"
+      },
+      "schedule_display": "0 8 * * 1-5",
+      "repeat": {
+        "times": null,
+        "completed": 4
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-25T12:52:37.854324-05:00",
+      "next_run_at": "2026-07-01T08:00:00-05:00",
+      "last_run_at": "2026-06-30T08:00:19.302871-05:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "60257b517c51",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "917fbb44881c",
+      "name": "daily-journal-draft",
+      "prompt": "You are running a scheduled daily summary for Chris Dixon. DELIVERY: Your final response is automatically delivered to the user. If there's genuinely nothing new to report, respond with exactly \"[SILENT]\" and nothing more.\n\nProduce a DAILY SUMMARY (NOT formatted as a brief). Use this structure:\n\n## Summary \u2014 [Date]\n\n**Tasks completed today:**\n- [from task list or Obsidian tasks dir /Users/mrchriswdixon/Obsidian/SecondBrain/Tasks/]\n\n**In-progress work:**\n- [active items from dual-brief output or vault-tasks.py]\n\n**Calendar highlights:**\n- If events exist, list brief summary. Otherwise \"No events today.\"\n\n**Slack highlights \u2014 #vip-fde-backchannel:**\n- Fetch Slack messages via MCP: use `mcp_context_a8c_context_a8c_execute_tool` with provider \"slack\", subtool \"messages\", channel_id \"C0B6ANMQGQ1\", limit 50. Summarize the 2-3 most interesting items, not a raw dump.\n\n**Meetings (Quill):**\n- Fetch via `mcp_context_a8c_context_a8c_execute_tool` with provider \"quill\", subtool \"get-calendar\". List today's meetings with times and attendees.\n\n**Data gaps noted:**\n- If Slack or Quill MCP servers are unavailable, note them here but continue with available data.\n\nAt the end, save a full copy to: /Users/mrchriswdixon/.hermes/cron/output/917fbb44881c/YYYY-MM_DD-HHMM.md\n\nNo brief-style headers like \"Daily Brief \u2014 Chris\". This is a summary of what happened today.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * *",
+        "display": "0 12 * * *"
+      },
+      "schedule_display": "0 12 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 5
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-25T13:20:57.085683-05:00",
+      "next_run_at": "2026-07-01T12:00:00-05:00",
+      "last_run_at": "2026-06-30T12:01:32.848991-05:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": "unknown platform 'webui'",
+      "deliver": "origin",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "bad6be600a98",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "359212147f55",
+      "name": "weekly-work-summary",
+      "prompt": "You are generating a \"What I worked on this week\" summary for Chris Dixon. Write it as a single Obsidian journal note saved to ~/Obsidian/SecondBrain/Journals/Weekly/, use today's date as filename (format: MMDD-weekly.md).\n\nFirst, gather data for the past 7 days:\n\nSTEP 1 \u2014 Calendar events for the FULL PAST WEEK:\nRun dual-brief and parse output:\n```bash\npython3 /Users/mrchriswdixon/.hermes/scripts/dual-brief.py -s \"date-7d\" -e \"date-0d\" --briefing chris --output /tmp/db-week.json\n```\nRead back /tmp/db-week.json for all calendar events.\n\nSTEP 2 \u2014 Slack backchannel activity (past 7 days):\nUse the Slack MCP provider to fetch recent messages from channel C0B6ANMQGQ1 (#vip-fde-backchannel). Calculate a 'before' timestamp for 7 days ago (current epoch minus 604800 seconds) and call:\n```json\n{ \"provider\": \"slack\", \"subtool\": \"get-conversation-history\", \"subtool_args\": { \"channel_id\": \"C0B6ANMQGQ1\", \"limit\": 200 } }\n```\n\nSTEP 3 \u2014 Pull daily journal drafts from cron output:\nRead any daily-journal-draft cron outputs in ~/.hermes/cron/output/917fbb44881c/ for the past 7 days. Use those as a secondary data source.\n\nSTEP 4 \u2014 Compile the weekly summary with this Obsidian structure:\n```markdown\n---\ntitle: Weekly Work Summary - [date range]\ntags:\n  - weekly-summary\nweek_start: start of week\nweek_end: end of week\n---\n\n# This Week's Notes \u2014 [Month Day\u2013Day, YYYY]\n\n## Calendar Highlights\n*List all events grouped by day. For each entry:*\n- **[YYYY-MM-DD]** \u2014 Event name at time (e.g., 3:00 PM) | Location/Notes if any\n\n## Slack Backchannel \u2014 #vip-fde-backchannel\n*(Highlights only \u2014 group by most interesting thread/topic)*\n\n[Summarize significant backchannel entries from the week, per-day sections. Use bold names and timestamps. Quote key quotes or decisions.]\n\n## Journal Entries (from Daily Drafts)\n*Pull notes/drafts from daily journal summaries:*\n- **YYYY-MM-DD** \u2014 [brief daily summary]\n\n---\n\n## Notable Patterns / Takeaways from the Week\n\n[2\u20133 high-level observations about what happened across all sources]\n```\n\nSTEP 5 \u2014 Deliver the full compiled weekly note as your response. Add one header line: \"Weekly summary saved: MMDD-weekly.md \u2014 [3-sentence recap of the week's main activities].\"",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 14 * * 5",
+        "display": "0 14 * * 5"
+      },
+      "schedule_display": "0 14 * * 5",
+      "repeat": {
+        "times": null,
+        "completed": 1
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-25T13:21:17.377294-05:00",
+      "next_run_at": "2026-07-03T14:00:00-05:00",
+      "last_run_at": "2026-06-26T14:08:04.437446-05:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "bad6be600a98",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "6720e6fe0898",
+      "name": "daily-slack-rollup",
+      "prompt": "You are running a daily Slack rollup for the VIP FDE backchannel (#vip-fde-backchannel, C0B6ANMQGQ1). \n\nStep 1: Check if there's an existing slack-rollup state file at ~/.hermes/cron/data/slack-rollup.json. If it exists, read the last_known_ts field as a timestamp to use as the \"before\" cursor for pagination in the Slack MCP call (to fetch only messages newer than the last run). If no previous state exists, start from the current time and fetch all messages up to 7 days ago.\n\nStep 2: Fetch recent messages from the Slack channel #vip-fde-backchannel using the slack MCP provider with this tool call:\n```json\n{\n  \"provider\": \"slack\",\n  \"subtool\": \"messages\",\n  \"subtool_args\": {\n    \"channel\": \"C0B6ANMQGQ1\",\n    \"limit\": 50,\n    \"before\": \"<previous known timestamp if available>\",\n    \"latest\": \"<current unix epoch timestamp>\"\n  }\n}\n```\n\nStep 3: Parse the messages. For each message that is NOT from a bot (exclude username \"Daily Standup\" entries and any other bot_id presence), extract:\n- author name (username field, fallback to user if empty)\n- text content (cleaned \u2014 strip HTML entities like &amp; back to &, remove angle-bracket user mentions like <@USER|Name>, convert links to bare URLs)\n- timestamp\n- date in YYYY-MM-DD format\n\nStep 4: Write a state file at ~/.hermes/cron/data/slack-rollup.json with the latest message's ts from this run as next_ts. Then, for each new non-bot message found since last run, append a markdown-formatted entry to the daily rollup file at ~/.hermes/cron/output/slack-daily/YYYY-MM-DD.md (create YYYY-MM-DD dir if needed) using this format:\n\n```\n### [YYYY-MM-DD] Slack \u2014 #vip-fde-backchannel\n\n**[Author Name] ([HH:MM AM/PM])**\n[text content]\n```\n\nStep 5: Deliver a concise message to the user listing how many new messages were captured, who posted most, and 1-2 high-signal items (project announcements, decisions, questions) as bullet points. If no significant activity happened, report \"Quiet day \u2014 [X] new messages from Slack.\"",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 360,
+        "display": "every 360m"
+      },
+      "schedule_display": "every 360m",
+      "repeat": {
+        "times": null,
+        "completed": 16
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-26T12:19:56.609055-05:00",
+      "next_run_at": "2026-06-30T16:23:55.040568-05:00",
+      "last_run_at": "2026-06-30T10:23:55.040568-05:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "20260626_120820_25d31b",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "a909b95937eb",
+      "name": "daily-brief-chris",
+      "prompt": "Run the daily brief for Chris Dixon at 7am weekdays. Use the script at ~/.hermes/scripts/dual-brief.py with the --brief-input chris flag.\n\nThe script generates: calendar (title | time only), open tasks from Notion, weather (high/low + hourly AM/PM/Evening with rain %), and a first-person quote with commentary.\n\nDelivery: save output to ~/.hermes/cron/output/ as a markdown file. Do not send to iMessage or other external services.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "brief-chris.sh",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 7 * * *",
+        "display": "0 7 * * *"
+      },
+      "schedule_display": "0 7 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-06-30T07:50:41.426304-05:00",
+      "next_run_at": "2026-07-01T07:00:00-05:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "webui",
+        "chat_id": "571d177f9984",
+        "chat_name": null,
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null
+    }
+  ],
+  "updated_at": "2026-06-30T12:06:50.275657-05:00"
+}
